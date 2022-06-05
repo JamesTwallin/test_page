@@ -1,37 +1,50 @@
-## Welcome to GitHub Pages
+<html>
+  <head>
+    <title>Matplotlib</title>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="./favicon.png">
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <py-env>
+      - matplotlib
+    </py-env>
+    </head>
+    <body>
+      <div id="mpl"></div>
+      <py-script output="mpl">
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+import numpy as np
 
-You can use the [editor on GitHub](https://github.com/JamesTwallin/test_page/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+# First create the x and y coordinates of the points.
+n_angles = 36
+n_radii = 8
+min_radius = 0.25
+radii = np.linspace(min_radius, 0.95, n_radii)
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False)
+angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
+angles[:, 1::2] += np.pi / n_angles
 
-### Markdown
+x = (radii * np.cos(angles)).flatten()
+y = (radii * np.sin(angles)).flatten()
+z = (np.cos(radii) * np.cos(3 * angles)).flatten()
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+# Create the Triangulation; no triangles so Delaunay triangulation created.
+triang = tri.Triangulation(x, y)
 
-```markdown
-Syntax highlighted code block
+# Mask off unwanted triangles.
+triang.set_mask(np.hypot(x[triang.triangles].mean(axis=1),
+                         y[triang.triangles].mean(axis=1))
+                < min_radius)
 
-# Header 1
-## Header 2
-### Header 3
+fig1, ax1 = plt.subplots()
+ax1.set_aspect('equal')
+tpc = ax1.tripcolor(triang, z, shading='flat')
+fig1.colorbar(tpc)
+ax1.set_title('tripcolor of Delaunay triangulation, flat shading')
 
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/JamesTwallin/test_page/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+fig1
+      </py-script>
+    </body>
+</html>
